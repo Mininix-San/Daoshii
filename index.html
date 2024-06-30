@@ -92,10 +92,10 @@
             list-style-type: none;
         }
     </style>
-    <script src="https://www.gstatic.com/firebasejs/8.6.2/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.6.2/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
     <script>
-        const firebaseConfig = {
+        var firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_AUTH_DOMAIN",
             databaseURL: "YOUR_DATABASE_URL",
@@ -105,7 +105,9 @@
             appId: "YOUR_APP_ID"
         };
         firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+    </script>
+    <script>
+        let db = firebase.database();
 
         let totalComissaoSombra = 0;
         let totalComissaoSol = 0;
@@ -146,6 +148,60 @@
         let totalLucroCow = 0;
         let totalLucroLBW = 0;
         let totalLucroDW = 0;
+
+        function saveState() {
+            const state = {
+                totalComissaoSombra,
+                totalComissaoSol,
+                totalLogsSombra,
+                totalLogsSol,
+                logsSombra,
+                logsSol,
+                exchangeRate,
+                goldRateR,
+                goldRateD,
+                totalLucro,
+                pacoteQuantidades,
+                quantidadeOuro: document.getElementById('quantidadeOuro').value,
+                registrosCow,
+                registrosLBW,
+                registrosDW,
+                totalLucroCow,
+                totalLucroLBW,
+                totalLucroDW
+            };
+            db.ref('appState').set(state);
+        }
+
+        function loadState() {
+            db.ref('appState').on('value', (snapshot) => {
+                const state = snapshot.val();
+                if (state) {
+                    totalComissaoSombra = state.totalComissaoSombra;
+                    totalComissaoSol = state.totalComissaoSol;
+                    totalLogsSombra = state.totalLogsSombra;
+                    totalLogsSol = state.totalLogsSol;
+                    logsSombra = state.logsSombra;
+                    logsSol = state.logsSol;
+                    exchangeRate = state.exchangeRate;
+                    goldRateR = state.goldRateR;
+                    goldRateD = state.goldRateD;
+                    totalLucro = state.totalLucro;
+                    pacoteQuantidades = state.pacoteQuantidades;
+                    document.getElementById('quantidadeOuro').value = state.quantidadeOuro;
+                    document.getElementById('exchangeRate').value = exchangeRate;
+                    document.getElementById('goldRateR').value = goldRateR;
+                    document.getElementById('goldRateD').value = goldRateD;
+                    registrosCow = state.registrosCow || [];
+                    registrosLBW = state.registrosLBW || [];
+                    registrosDW = state.registrosDW || [];
+                    totalLucroCow = state.totalLucroCow || 0;
+                    totalLucroLBW = state.totalLucroLBW || 0;
+                    totalLucroDW = state.totalLucroDW || 0;
+                    updateDisplays();
+                }
+            });
+        }
 
         function updateDisplays() {
             document.getElementById('totalComissaoSombra').innerText = totalComissaoSombra.toFixed(2);
@@ -227,11 +283,7 @@
                 totalComissaoSombra += comissao;
                 totalLogsSombra += valor;
                 updateDisplays();
-                
-                // Atualize o Firebase
-                database.ref('logsSombra').set(logsSombra);
-                database.ref('totalComissaoSombra').set(totalComissaoSombra);
-                database.ref('totalLogsSombra').set(totalLogsSombra);
+                saveState();
             } else {
                 alert("Por favor, insira o nome do cliente.");
             }
@@ -249,11 +301,7 @@
                 totalComissaoSol += comissao;
                 totalLogsSol += valor;
                 updateDisplays();
-                
-                // Atualize o Firebase
-                database.ref('logsSol').set(logsSol);
-                database.ref('totalComissaoSol').set(totalComissaoSol);
-                database.ref('totalLogsSol').set(totalLogsSol);
+                saveState();
             } else {
                 alert("Por favor, insira o nome do cliente.");
             }
@@ -264,9 +312,7 @@
             totalLogsSombra = 0;
             logsSombra = {};
             updateDisplays();
-            database.ref('logsSombra').remove();
-            database.ref('totalComissaoSombra').set(0);
-            database.ref('totalLogsSombra').set(0);
+            saveState();
         }
 
         function resetSol() {
@@ -274,9 +320,7 @@
             totalLogsSol = 0;
             logsSol = {};
             updateDisplays();
-            database.ref('logsSol').remove();
-            database.ref('totalComissaoSol').set(0);
-            database.ref('totalLogsSol').set(0);
+            saveState();
         }
 
         function verifyLog(panel, cliente) {
@@ -286,7 +330,7 @@
                 logsSol[cliente].verified = true;
             }
             updateDisplays();
-            database.ref(panel === 'sombra' ? 'logsSombra' : 'logsSol').set(panel === 'sombra' ? logsSombra : logsSol);
+            saveState();
         }
 
         function deleteLog(panel, cliente) {
@@ -300,9 +344,7 @@
                 delete logsSol[cliente];
             }
             updateDisplays();
-            database.ref(panel === 'sombra' ? 'logsSombra' : 'logsSol').set(panel === 'sombra' ? logsSombra : logsSol);
-            database.ref(panel === 'sombra' ? 'totalComissaoSombra' : 'totalComissaoSol').set(panel === 'sombra' ? totalComissaoSombra : totalComissaoSol);
-            database.ref(panel === 'sombra' ? 'totalLogsSombra' : 'totalLogsSol').set(panel === 'sombra' ? totalLogsSombra : totalLogsSol);
+            saveState();
         }
 
         function updatePacoteQuantidades(pacote, quantidade) {
@@ -470,10 +512,6 @@ Me fale o servidor e anuncie o item no mercado a ${quantidadeAnunciada}.`;
                 }
                 updateRegistrosDisplay();
                 saveState();
-                
-                // Atualize o Firebase
-                database.ref(`registros${divisao}`).set(divisao === 'Cow' ? registrosCow : divisao === 'LBW' ? registrosLBW : registrosDW);
-                database.ref(`totalLucro${divisao}`).set(divisao === 'Cow' ? totalLucroCow : divisao === 'LBW' ? totalLucroLBW : totalLucroDW);
             } else {
                 alert("Por favor, insira o nome do cliente e a quantidade de ouro.");
             }
@@ -497,9 +535,6 @@ Me fale o servidor e anuncie o item no mercado a ${quantidadeAnunciada}.`;
                 registro.verified = true;
                 updateRegistrosDisplay();
                 saveState();
-                
-                // Atualize o Firebase
-                database.ref(`registros${divisao}`).set(divisao === 'Cow' ? registrosCow : divisao === 'LBW' ? registrosLBW : registrosDW);
             }
         }
 
@@ -527,10 +562,6 @@ Me fale o servidor e anuncie o item no mercado a ${quantidadeAnunciada}.`;
             }
             updateRegistrosDisplay();
             saveState();
-            
-            // Atualize o Firebase
-            database.ref(`registros${divisao}`).set(divisao === 'Cow' ? registrosCow : divisao === 'LBW' ? registrosLBW : registrosDW);
-            database.ref(`totalLucro${divisao}`).set(divisao === 'Cow' ? totalLucroCow : divisao === 'LBW' ? totalLucroLBW : totalLucroDW);
         }
 
         function resetRegistros(divisao) {
@@ -550,69 +581,9 @@ Me fale o servidor e anuncie o item no mercado a ${quantidadeAnunciada}.`;
             }
             updateRegistrosDisplay();
             saveState();
-            
-            // Atualize o Firebase
-            database.ref(`registros${divisao}`).set(divisao === 'Cow' ? registrosCow : divisao === 'LBW' ? registrosLBW : registrosDW);
-            database.ref(`totalLucro${divisao}`).set(divisao === 'Cow' ? totalLucroCow : divisao === 'LBW' ? totalLucroLBW : totalLucroDW);
         }
 
-        // Escute mudanças no Firebase para atualizar a interface do usuário em tempo real
-        database.ref('logsSombra').on('value', (snapshot) => {
-            logsSombra = snapshot.val() || {};
-            updateDisplays();
-        });
-        database.ref('totalComissaoSombra').on('value', (snapshot) => {
-            totalComissaoSombra = snapshot.val() || 0;
-            document.getElementById('totalComissaoSombra').innerText = totalComissaoSombra.toFixed(2);
-        });
-        database.ref('totalLogsSombra').on('value', (snapshot) => {
-            totalLogsSombra = snapshot.val() || 0;
-            document.getElementById('totalLogsSombra').innerText = totalLogsSombra.toFixed(2);
-        });
-
-        database.ref('logsSol').on('value', (snapshot) => {
-            logsSol = snapshot.val() || {};
-            updateDisplays();
-        });
-        database.ref('totalComissaoSol').on('value', (snapshot) => {
-            totalComissaoSol = snapshot.val() || 0;
-            document.getElementById('totalComissaoSol').innerText = totalComissaoSol.toFixed(2);
-        });
-        database.ref('totalLogsSol').on('value', (snapshot) => {
-            totalLogsSol = snapshot.val() || 0;
-            document.getElementById('totalLogsSol').innerText = totalLogsSol.toFixed(2);
-        });
-
-        database.ref('registrosCow').on('value', (snapshot) => {
-            registrosCow = snapshot.val() || [];
-            updateRegistrosDisplay();
-        });
-        database.ref('totalLucroCow').on('value', (snapshot) => {
-            totalLucroCow = snapshot.val() || 0;
-            document.getElementById('totalLucroCow').innerText = totalLucroCow.toFixed(2);
-        });
-
-        database.ref('registrosLBW').on('value', (snapshot) => {
-            registrosLBW = snapshot.val() || [];
-            updateRegistrosDisplay();
-        });
-        database.ref('totalLucroLBW').on('value', (snapshot) => {
-            totalLucroLBW = snapshot.val() || 0;
-            document.getElementById('totalLucroLBW').innerText = totalLucroLBW.toFixed(2);
-        });
-
-        database.ref('registrosDW').on('value', (snapshot) => {
-            registrosDW = snapshot.val() || [];
-            updateRegistrosDisplay();
-        });
-        database.ref('totalLucroDW').on('value', (snapshot) => {
-            totalLucroDW = snapshot.val() || 0;
-            document.getElementById('totalLucroDW').innerText = totalLucroDW.toFixed(2);
-        });
-
-        window.onload = () => {
-            updateDisplays();
-        };
+        window.onload = loadState;
     </script>
 </head>
 <body>
