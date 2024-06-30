@@ -11,13 +11,18 @@
             background-repeat: no-repeat;
             background-attachment: fixed;
             font-family: 'Comic Sans MS', 'Comic Sans', cursive;
-            color: #FF69B4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
         }
         .panel {
             width: 22%;
             padding: 20px;
-            border: 2px solid #FFD700;
-            border-radius: 20px;
+            border: 2px solid #FF6EC7;
+            border-radius: 15px;
             box-shadow: 0 8px 16px rgba(0,0,0,0.2);
             margin: 20px;
             display: inline-block;
@@ -26,59 +31,58 @@
             position: relative;
         }
         h2 {
-            font-size: 1.8em;
+            font-size: 1.5em;
             margin-bottom: 10px;
             text-align: center;
-            color: #FF1493;
+            color: #FF6EC7;
         }
         .sol-button {
-            background-color: #FFD700;
-            border: 2px solid #FF69B4;
-            border-radius: 10px;
-            font-size: 1.2em;
-            color: #FF1493;
-            font-weight: bold;
+            background-color: #FF6EC7;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            color: white;
+            cursor: pointer;
         }
         button {
             display: block;
             margin: 10px 0;
             padding: 10px;
-            border: 2px solid #FF69B4;
-            border-radius: 10px;
-            font-size: 1.2em;
-            background-color: #FF69B4;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            background-color: #FFD700;
             color: white;
-            font-weight: bold;
+            cursor: pointer;
         }
         .log-item {
             display: flex;
             align-items: center;
             margin-top: 10px;
+            font-size: 0.9em;
+            color: #333;
         }
         .log-item button {
             margin-left: 10px;
-            background-color: #FF69B4;
-            border: 2px solid #FFD700;
+            background-color: #FF6EC7;
+            cursor: pointer;
         }
         .log-item::before {
-            content: "✨";
+            content: "⭐";
             margin-right: 5px;
         }
         input[type="text"], input[type="number"] {
             width: calc(100% - 22px);
             padding: 10px;
             margin: 5px 0;
-            border: 2px solid #FF69B4;
-            border-radius: 10px;
-            background-color: #FFD700;
-            color: #FF1493;
-            font-weight: bold;
+            border: 2px solid #FF6EC7;
+            border-radius: 5px;
         }
         label {
             font-weight: bold;
             margin-top: 10px;
             display: block;
-            color: #FF1493;
+            color: #FF6EC7;
         }
         p, ul {
             margin: 10px 0;
@@ -88,8 +92,21 @@
             list-style-type: none;
         }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/8.6.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.2/firebase-database.js"></script>
     <script>
-        // Código JavaScript permanece inalterado
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
         let totalComissaoSombra = 0;
         let totalComissaoSol = 0;
         let totalLogsSombra = 0;
@@ -120,45 +137,15 @@
             100: 5.00
         };
 
-        function saveState() {
-            const state = {
-                totalComissaoSombra,
-                totalComissaoSol,
-                totalLogsSombra,
-                totalLogsSol,
-                logsSombra,
-                logsSol,
-                exchangeRate,
-                goldRateR,
-                goldRateD,
-                totalLucro,
-                pacoteQuantidades,
-                quantidadeOuro: document.getElementById('quantidadeOuro').value
-            };
-            localStorage.setItem('appState', JSON.stringify(state));
-        }
+        let registrosCow = [];
+        let registrosLBW = [];
+        let registrosDW = [];
 
-        function loadState() {
-            const state = JSON.parse(localStorage.getItem('appState'));
-            if (state) {
-                totalComissaoSombra = state.totalComissaoSombra;
-                totalComissaoSol = state.totalComissaoSol;
-                totalLogsSombra = state.totalLogsSombra;
-                totalLogsSol = state.totalLogsSol;
-                logsSombra = state.logsSombra;
-                logsSol = state.logsSol;
-                exchangeRate = state.exchangeRate;
-                goldRateR = state.goldRateR;
-                goldRateD = state.goldRateD;
-                totalLucro = state.totalLucro;
-                pacoteQuantidades = state.pacoteQuantidades;
-                document.getElementById('quantidadeOuro').value = state.quantidadeOuro;
-                document.getElementById('exchangeRate').value = exchangeRate;
-                document.getElementById('goldRateR').value = goldRateR;
-                document.getElementById('goldRateD').value = goldRateD;
-                updateDisplays();
-            }
-        }
+        let listaOuroGlobal = [];
+
+        let totalLucroCow = 0;
+        let totalLucroLBW = 0;
+        let totalLucroDW = 0;
 
         function updateDisplays() {
             document.getElementById('totalComissaoSombra').innerText = totalComissaoSombra.toFixed(2);
@@ -167,14 +154,14 @@
             document.getElementById('totalLogsSol').innerText = totalLogsSol.toFixed(2);
             document.getElementById('logsSombra').innerHTML = Object.keys(logsSombra).map(cliente => 
                 `<li class="log-item" id="log-sombra-${cliente}">
-                    ${logsSombra[cliente].verified ? '✔️ ' : ''}${cliente}: ${logsSombra[cliente].values.join(', ')} (Total: ${logsSombra[cliente].total.toFixed(2)})
+                    ${logsSombra[cliente].verified ? '✔️ ' : ''}${cliente}: ${logsSombra[cliente].values.join(', ')} (Total: ${logsSombra[cliente].total.toFixed(2)}, ${logsSombra[cliente].time})
                     <button onclick="verifyLog('sombra', '${cliente}')">✔️</button>
                     <button onclick="deleteLog('sombra', '${cliente}')">❌</button>
                 </li>`
             ).join('');
             document.getElementById('logsSol').innerHTML = Object.keys(logsSol).map(cliente => 
                 `<li class="log-item" id="log-sol-${cliente}">
-                    ${logsSol[cliente].verified ? '✔️ ' : ''}${cliente}: ${logsSol[cliente].values.join(', ')} (Total: ${logsSol[cliente].total.toFixed(2)})
+                    ${logsSol[cliente].verified ? '✔️ ' : ''}${cliente}: ${logsSol[cliente].values.join(', ')} (Total: ${logsSol[cliente].total.toFixed(2)}, ${logsSol[cliente].time})
                     <button onclick="verifyLog('sol', '${cliente}')">✔️</button>
                     <button onclick="deleteLog('sol', '${cliente}')">❌</button>
                 </li>`
@@ -183,13 +170,56 @@
             document.getElementById('totalLucro').innerText = totalLucro.toFixed(2);
             updatePacoteTotals();
             updateOuroCalculations();
+            updateRegistrosDisplay();
+        }
+
+        function updateRegistrosDisplay() {
+            document.getElementById('registrosCow').innerHTML = registrosCow.map(registro => 
+                `<li class="log-item" id="log-cow-${registro.nome}">
+                    ${registro.verified ? '✔️ ' : ''}${registro.nome}: ${registro.lista.join(', ')} (Total: ${registro.total}g, ${registro.time})
+                    <button onclick="verifyRegistro('Cow', '${registro.nome}')">✔️</button>
+                    <button onclick="deleteRegistro('Cow', '${registro.nome}')">❌</button>
+                </li>`
+            ).join('');
+            document.getElementById('registrosLBW').innerHTML = registrosLBW.map(registro => 
+                `<li class="log-item" id="log-lbw-${registro.nome}">
+                    ${registro.verified ? '✔️ ' : ''}${registro.nome}: ${registro.lista.join(', ')} (Total: ${registro.total}g, ${registro.time})
+                    <button onclick="verifyRegistro('LBW', '${registro.nome}')">✔️</button>
+                    <button onclick="deleteRegistro('LBW', '${registro.nome}')">❌</button>
+                </li>`
+            ).join('');
+            document.getElementById('registrosDW').innerHTML = registrosDW.map(registro => 
+                `<li class="log-item" id="log-dw-${registro.nome}">
+                    ${registro.verified ? '✔️ ' : ''}${registro.nome}: ${registro.lista.join(', ')} (Total: ${registro.total}g, ${registro.time})
+                    <button onclick="verifyRegistro('DW', '${registro.nome}')">✔️</button>
+                    <button onclick="deleteRegistro('DW', '${registro.nome}')">❌</button>
+                </li>`
+            ).join('');
+
+            const totalCow = registrosCow.reduce((acc, registro) => acc + registro.total, 0);
+            const totalLBW = registrosLBW.reduce((acc, registro) => acc + registro.total, 0);
+            const totalDW = registrosDW.reduce((acc, registro) => acc + registro.total, 0);
+            const totalClientes = totalCow + totalLBW + totalDW;
+
+            document.getElementById('totalCow').innerText = totalCow;
+            document.getElementById('totalLBW').innerText = totalLBW;
+            document.getElementById('totalDW').innerText = totalDW;
+
+            document.getElementById('totalClientes').innerText = totalClientes;
+
+            document.getElementById('totalLucroCow').innerText = totalLucroCow.toFixed(2);
+            document.getElementById('totalLucroLBW').innerText = totalLucroLBW.toFixed(2);
+            document.getElementById('totalLucroDW').innerText = totalLucroDW.toFixed(2);
+
+            const totalLucroGeral = totalLucroCow + totalLucroLBW + totalLucroDW;
+            document.getElementById('totalLucroGeral').innerText = totalLucroGeral.toFixed(2);
         }
 
         function addToSombraLog(comissao, valor) {
             const nomeCliente = document.getElementById('nomeClienteSombra').value;
             if (nomeCliente) {
                 if (!logsSombra[nomeCliente]) {
-                    logsSombra[nomeCliente] = { values: [], total: 0, verified: false, comissao: 0 };
+                    logsSombra[nomeCliente] = { values: [], total: 0, verified: false, comissao: 0, time: new Date().toLocaleString() };
                 }
                 logsSombra[nomeCliente].values.push(valor.toFixed(2));
                 logsSombra[nomeCliente].total += valor;
@@ -197,7 +227,11 @@
                 totalComissaoSombra += comissao;
                 totalLogsSombra += valor;
                 updateDisplays();
-                saveState();
+                
+                // Atualize o Firebase
+                database.ref('logsSombra').set(logsSombra);
+                database.ref('totalComissaoSombra').set(totalComissaoSombra);
+                database.ref('totalLogsSombra').set(totalLogsSombra);
             } else {
                 alert("Por favor, insira o nome do cliente.");
             }
@@ -207,7 +241,7 @@
             const nomeCliente = document.getElementById('nomeClienteSol').value;
             if (nomeCliente) {
                 if (!logsSol[nomeCliente]) {
-                    logsSol[nomeCliente] = { values: [], total: 0, verified: false, comissao: 0 };
+                    logsSol[nomeCliente] = { values: [], total: 0, verified: false, comissao: 0, time: new Date().toLocaleString() };
                 }
                 logsSol[nomeCliente].values.push(valor.toFixed(2));
                 logsSol[nomeCliente].total += valor;
@@ -215,7 +249,11 @@
                 totalComissaoSol += comissao;
                 totalLogsSol += valor;
                 updateDisplays();
-                saveState();
+                
+                // Atualize o Firebase
+                database.ref('logsSol').set(logsSol);
+                database.ref('totalComissaoSol').set(totalComissaoSol);
+                database.ref('totalLogsSol').set(totalLogsSol);
             } else {
                 alert("Por favor, insira o nome do cliente.");
             }
@@ -226,7 +264,9 @@
             totalLogsSombra = 0;
             logsSombra = {};
             updateDisplays();
-            saveState();
+            database.ref('logsSombra').remove();
+            database.ref('totalComissaoSombra').set(0);
+            database.ref('totalLogsSombra').set(0);
         }
 
         function resetSol() {
@@ -234,7 +274,9 @@
             totalLogsSol = 0;
             logsSol = {};
             updateDisplays();
-            saveState();
+            database.ref('logsSol').remove();
+            database.ref('totalComissaoSol').set(0);
+            database.ref('totalLogsSol').set(0);
         }
 
         function verifyLog(panel, cliente) {
@@ -244,7 +286,7 @@
                 logsSol[cliente].verified = true;
             }
             updateDisplays();
-            saveState();
+            database.ref(panel === 'sombra' ? 'logsSombra' : 'logsSol').set(panel === 'sombra' ? logsSombra : logsSol);
         }
 
         function deleteLog(panel, cliente) {
@@ -258,7 +300,9 @@
                 delete logsSol[cliente];
             }
             updateDisplays();
-            saveState();
+            database.ref(panel === 'sombra' ? 'logsSombra' : 'logsSol').set(panel === 'sombra' ? logsSombra : logsSol);
+            database.ref(panel === 'sombra' ? 'totalComissaoSombra' : 'totalComissaoSol').set(panel === 'sombra' ? totalComissaoSombra : totalComissaoSol);
+            database.ref(panel === 'sombra' ? 'totalLogsSombra' : 'totalLogsSol').set(panel === 'sombra' ? totalLogsSombra : totalLogsSol);
         }
 
         function updatePacoteQuantidades(pacote, quantidade) {
@@ -306,7 +350,7 @@
             updateDisplays();
             saveState();
         }
-		function resetPacoteQuantidades() {
+        function resetPacoteQuantidades() {
             Object.keys(pacoteQuantidades).forEach(pacote => {
                 pacoteQuantidades[pacote] = 0;
                 document.getElementById(`pacote${pacote}`).value = 0;
@@ -314,9 +358,10 @@
             updatePacoteTotals();
             saveState();
         }
-		
-		function resetLucro() {
+
+        function resetLucro() {
             totalLucro = 0;
+            document.getElementById('totalLucro').innerText = '0.00';
             updateDisplays();
             saveState();
         }
@@ -325,26 +370,27 @@
             const quantidade = parseInt(document.getElementById('quantidadeOuro').value) || 0;
             const totalR = (quantidade / 1000) * goldRateR;
             const totalD = (quantidade / 1000) * goldRateD;
-            const quantidadeAnunciada = Math.floor(quantidade + (quantidade * 5.3 / 100));
-
-            let quantidadeDividida;
-
-            if (quantidade <= 2500) {
-                quantidadeDividida = quantidadeAnunciada;
-            } else if (quantidade <= 5000) {
-                quantidadeDividida = dividirEmPartes(quantidadeAnunciada, 2);
-            } else if (quantidade <= 7500) {
-                quantidadeDividida = dividirEmPartes(quantidadeAnunciada, 3);
-            } else if (quantidade <= 10000) {
-                quantidadeDividida = dividirEmPartes(quantidadeAnunciada, 4);
-            } else {
-                quantidadeDividida = "vou pegar uma lista pra você";
-            }
+            listaOuroGlobal = calcularListaOuro(quantidade);
 
             document.getElementById('totalROuro').innerText = totalR.toFixed(2);
             document.getElementById('totalDOuro').innerText = totalD.toFixed(2);
-            document.getElementById('quantidadeAnunciada').innerText = quantidadeDividida;
+            document.getElementById('quantidadeAnunciada').innerText = listaOuroGlobal.join(', ');
             saveState();
+        }
+
+        function calcularListaOuro(quantidade) {
+            const quantidadeAnunciada = Math.floor(quantidade + (quantidade * 5.3 / 100));
+            if (quantidade <= 2500) {
+                return [quantidadeAnunciada];
+            } else if (quantidade <= 5000) {
+                return dividirEmPartes(quantidadeAnunciada, 2);
+            } else if (quantidade <= 7500) {
+                return dividirEmPartes(quantidadeAnunciada, 3);
+            } else if (quantidade <= 10000) {
+                return dividirEmPartes(quantidadeAnunciada, 4);
+            } else {
+                return [quantidadeAnunciada];
+            }
         }
 
         function dividirEmPartes(total, partes) {
@@ -360,7 +406,7 @@
             }
 
             resultado.push(total - soma);
-            return resultado.join(', ');
+            return resultado;
         }
 
         function copiarTexto(texto) {
@@ -391,14 +437,182 @@
         function copiarMensagemPersonalizada() {
             const totalROuro = document.getElementById('totalROuro').innerText;
             const quantidadeAnunciada = document.getElementById('quantidadeAnunciada').innerText;
-            const servidor = "Nome do Servidor";  // substitua pelo valor real ou uma entrada do usuário
+            const servidor = "Nome do Servidor";
             const texto = `Da um total de R$${totalROuro}.
 Me fale o servidor e anuncie o item no mercado a ${quantidadeAnunciada}.`;
 
             copiarTexto(texto);
         }
 
-        window.onload = loadState;
+        function registrarCliente(divisao) {
+            const nomeCliente = document.getElementById(`nomeCliente${divisao}`).value;
+            const lucro = parseFloat(document.getElementById(`lucro${divisao}`).value) || 0;
+
+            if (nomeCliente && listaOuroGlobal.length > 0) {
+                const total = listaOuroGlobal.reduce((acc, val) => acc + val, 0);
+                const totalLucro = (total / 1053) * lucro;
+                
+                const registro = { nome: nomeCliente, lista: [...listaOuroGlobal], total, verified: false, lucro: totalLucro, time: new Date().toLocaleString() };
+                
+                switch (divisao) {
+                    case 'Cow':
+                        registrosCow.push(registro);
+                        totalLucroCow += totalLucro;
+                        break;
+                    case 'LBW':
+                        registrosLBW.push(registro);
+                        totalLucroLBW += totalLucro;
+                        break;
+                    case 'DW':
+                        registrosDW.push(registro);
+                        totalLucroDW += totalLucro;
+                        break;
+                }
+                updateRegistrosDisplay();
+                saveState();
+                
+                // Atualize o Firebase
+                database.ref(`registros${divisao}`).set(divisao === 'Cow' ? registrosCow : divisao === 'LBW' ? registrosLBW : registrosDW);
+                database.ref(`totalLucro${divisao}`).set(divisao === 'Cow' ? totalLucroCow : divisao === 'LBW' ? totalLucroLBW : totalLucroDW);
+            } else {
+                alert("Por favor, insira o nome do cliente e a quantidade de ouro.");
+            }
+        }
+
+        function verifyRegistro(divisao, nomeCliente) {
+            let registros;
+            switch (divisao) {
+                case 'Cow':
+                    registros = registrosCow;
+                    break;
+                case 'LBW':
+                    registros = registrosLBW;
+                    break;
+                case 'DW':
+                    registros = registrosDW;
+                    break;
+            }
+            const registro = registros.find(registro => registro.nome === nomeCliente);
+            if (registro) {
+                registro.verified = true;
+                updateRegistrosDisplay();
+                saveState();
+                
+                // Atualize o Firebase
+                database.ref(`registros${divisao}`).set(divisao === 'Cow' ? registrosCow : divisao === 'LBW' ? registrosLBW : registrosDW);
+            }
+        }
+
+        function deleteRegistro(divisao, nomeCliente) {
+            let registros;
+            switch (divisao) {
+                case 'Cow':
+                    registros = registrosCow;
+                    const registroCow = registrosCow.find(registro => registro.nome === nomeCliente);
+                    totalLucroCow -= registroCow.lucro;
+                    registrosCow = registrosCow.filter(registro => registro.nome !== nomeCliente);
+                    break;
+                case 'LBW':
+                    registros = registrosLBW;
+                    const registroLBW = registrosLBW.find(registro => registro.nome === nomeCliente);
+                    totalLucroLBW -= registroLBW.lucro;
+                    registrosLBW = registrosLBW.filter(registro => registro.nome !== nomeCliente);
+                    break;
+                case 'DW':
+                    registros = registrosDW;
+                    const registroDW = registrosDW.find(registro => registro.nome === nomeCliente);
+                    totalLucroDW -= registroDW.lucro;
+                    registrosDW = registrosDW.filter(registro => registro.nome !== nomeCliente);
+                    break;
+            }
+            updateRegistrosDisplay();
+            saveState();
+            
+            // Atualize o Firebase
+            database.ref(`registros${divisao}`).set(divisao === 'Cow' ? registrosCow : divisao === 'LBW' ? registrosLBW : registrosDW);
+            database.ref(`totalLucro${divisao}`).set(divisao === 'Cow' ? totalLucroCow : divisao === 'LBW' ? totalLucroLBW : totalLucroDW);
+        }
+
+        function resetRegistros(divisao) {
+            switch (divisao) {
+                case 'Cow':
+                    registrosCow = [];
+                    totalLucroCow = 0;
+                    break;
+                case 'LBW':
+                    registrosLBW = [];
+                    totalLucroLBW = 0;
+                    break;
+                case 'DW':
+                    registrosDW = [];
+                    totalLucroDW = 0;
+                    break;
+            }
+            updateRegistrosDisplay();
+            saveState();
+            
+            // Atualize o Firebase
+            database.ref(`registros${divisao}`).set(divisao === 'Cow' ? registrosCow : divisao === 'LBW' ? registrosLBW : registrosDW);
+            database.ref(`totalLucro${divisao}`).set(divisao === 'Cow' ? totalLucroCow : divisao === 'LBW' ? totalLucroLBW : totalLucroDW);
+        }
+
+        // Escute mudanças no Firebase para atualizar a interface do usuário em tempo real
+        database.ref('logsSombra').on('value', (snapshot) => {
+            logsSombra = snapshot.val() || {};
+            updateDisplays();
+        });
+        database.ref('totalComissaoSombra').on('value', (snapshot) => {
+            totalComissaoSombra = snapshot.val() || 0;
+            document.getElementById('totalComissaoSombra').innerText = totalComissaoSombra.toFixed(2);
+        });
+        database.ref('totalLogsSombra').on('value', (snapshot) => {
+            totalLogsSombra = snapshot.val() || 0;
+            document.getElementById('totalLogsSombra').innerText = totalLogsSombra.toFixed(2);
+        });
+
+        database.ref('logsSol').on('value', (snapshot) => {
+            logsSol = snapshot.val() || {};
+            updateDisplays();
+        });
+        database.ref('totalComissaoSol').on('value', (snapshot) => {
+            totalComissaoSol = snapshot.val() || 0;
+            document.getElementById('totalComissaoSol').innerText = totalComissaoSol.toFixed(2);
+        });
+        database.ref('totalLogsSol').on('value', (snapshot) => {
+            totalLogsSol = snapshot.val() || 0;
+            document.getElementById('totalLogsSol').innerText = totalLogsSol.toFixed(2);
+        });
+
+        database.ref('registrosCow').on('value', (snapshot) => {
+            registrosCow = snapshot.val() || [];
+            updateRegistrosDisplay();
+        });
+        database.ref('totalLucroCow').on('value', (snapshot) => {
+            totalLucroCow = snapshot.val() || 0;
+            document.getElementById('totalLucroCow').innerText = totalLucroCow.toFixed(2);
+        });
+
+        database.ref('registrosLBW').on('value', (snapshot) => {
+            registrosLBW = snapshot.val() || [];
+            updateRegistrosDisplay();
+        });
+        database.ref('totalLucroLBW').on('value', (snapshot) => {
+            totalLucroLBW = snapshot.val() || 0;
+            document.getElementById('totalLucroLBW').innerText = totalLucroLBW.toFixed(2);
+        });
+
+        database.ref('registrosDW').on('value', (snapshot) => {
+            registrosDW = snapshot.val() || [];
+            updateRegistrosDisplay();
+        });
+        database.ref('totalLucroDW').on('value', (snapshot) => {
+            totalLucroDW = snapshot.val() || 0;
+            document.getElementById('totalLucroDW').innerText = totalLucroDW.toFixed(2);
+        });
+
+        window.onload = () => {
+            updateDisplays();
+        };
     </script>
 </head>
 <body>
@@ -491,9 +705,50 @@ Me fale o servidor e anuncie o item no mercado a ${quantidadeAnunciada}.`;
         <h2>Mensagem Personalizada</h2>
         <button onclick="copiarMensagemPersonalizada()">Copiar Mensagem Personalizada</button>
     </div>
-    <div style="width: 90%; padding: 20px; border: 2px solid #FFD700; border-radius: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); margin: 20px; background-color: rgba(255, 255, 255, 0.9);">
+    <div style="width: 90%; padding: 20px; border: 2px solid #FF6EC7; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); margin: 20px; background-color: rgba(255, 255, 255, 0.9);">
         <h2>Total de Todos os Logs</h2>
         <p>Valor a mandar no L Total: <span id="totalLogsSombraSol">0.00</span></p>
+    </div>
+    <div class="panel">
+        <h2>Cow</h2>
+        <label for="nomeClienteCow">Nome do Cliente:</label>
+        <input type="text" id="nomeClienteCow"><br>
+        <label for="lucroCow">Lucro por 1053g:</label>
+        <input type="number" id="lucroCow" value="0" step="0.01"><br>
+        <button onclick="registrarCliente('Cow')">Registrar</button>
+        <button onclick="resetRegistros('Cow')">Resetar</button>
+        <ul id="registrosCow"></ul>
+        <p>Total de Ouro (Cow): <span id="totalCow">0</span>g</p>
+        <p>Total Lucro (Cow): $<span id="totalLucroCow">0.00</span></p>
+    </div>
+    <div class="panel">
+        <h2>LBW</h2>
+        <label for="nomeClienteLBW">Nome do Cliente:</label>
+        <input type="text" id="nomeClienteLBW"><br>
+        <label for="lucroLBW">Lucro por 1053g:</label>
+        <input type="number" id="lucroLBW" value="0" step="0.01"><br>
+        <button onclick="registrarCliente('LBW')">Registrar</button>
+        <button onclick="resetRegistros('LBW')">Resetar</button>
+        <ul id="registrosLBW"></ul>
+        <p>Total de Ouro (LBW): <span id="totalLBW">0</span>g</p>
+        <p>Total Lucro (LBW): $<span id="totalLucroLBW">0.00</span></p>
+    </div>
+    <div class="panel">
+        <h2>DW</h2>
+        <label for="nomeClienteDW">Nome do Cliente:</label>
+        <input type="text" id="nomeClienteDW"><br>
+        <label for="lucroDW">Lucro por 1053g:</label>
+        <input type="number" id="lucroDW" value="0" step="0.01"><br>
+        <button onclick="registrarCliente('DW')">Registrar</button>
+        <button onclick="resetRegistros('DW')">Resetar</button>
+        <ul id="registrosDW"></ul>
+        <p>Total de Ouro (DW): <span id="totalDW">0</span>g</p>
+        <p>Total Lucro (DW): $<span id="totalLucroDW">0.00</span></p>
+    </div>
+    <div class="panel">
+        <h2>Total de Todos os Clientes</h2>
+        <p>Total de Ouro: <span id="totalClientes">0</span>g</p>
+        <p>Total Lucro Geral: $<span id="totalLucroGeral">0.00</span></p>
     </div>
 </body>
 </html>
