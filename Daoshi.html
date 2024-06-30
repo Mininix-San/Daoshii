@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Comissão e Pacotes</title>
+    <style>
+        body {
+            background-image: url('https://r4.wallpaperflare.com/wallpaper/671/31/673/tv-show-star-vs-the-forces-of-evil-star-butterfly-wallpaper-a920088dc10a7dfbd63728bff031867d.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+            color: #333;
+        }
+        .panel {
+            width: 22%;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin: 20px;
+            display: inline-block;
+            vertical-align: top;
+            background-color: rgba(255, 255, 255, 0.9);
+            position: relative;
+        }
+        h2 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .sol-button {
+            background-color: pink;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            color: white;
+        }
+        button {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            background-color: lightblue;
+            color: white;
+        }
+        .log-item {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .log-item button {
+            margin-left: 10px;
+            background-color: lightcoral;
+        }
+        .log-item::before {
+            content: "🌸";
+            margin-right: 5px;
+        }
+        input[type="text"], input[type="number"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+            display: block;
+        }
+        p, ul {
+            margin: 10px 0;
+            padding: 0;
+        }
+        ul {
+            list-style-type: none;
+        }
+    </style>
+    <script>
+        let totalComissaoSombra = 0;
+        let totalComissaoSol = 0;
+        let totalLogsSombra = 0;
+        let totalLogsSol = 0;
+        let logsSombra = {};
+        let logsSol = {};
+        let exchangeRate = 5.53;
+        let goldRateR = 31.00;
+        let goldRateD = 5.55;
+        let totalLucro = 0;
+        let pacoteQuantidades = {
+            10: 0,
+            30: 0,
+            50: 0,
+            100: 0
+        };
+
+        const pacotePrecos = {
+            10: 7.30,
+            30: 21.00,
+            50: 35.00,
+            100: 70.00
+        };
+        const pacoteLucro = {
+            10: 1.00,
+            30: 2.00,
+            50: 3.50,
+            100: 5.00
+        };
+
+        function saveState() {
+            const state = {
+                totalComissaoSombra,
+                totalComissaoSol,
+                totalLogsSombra,
+                totalLogsSol,
+                logsSombra,
+                logsSol,
+                exchangeRate,
+                goldRateR,
+                goldRateD,
+                totalLucro,
+                pacoteQuantidades,
+                quantidadeOuro: document.getElementById('quantidadeOuro').value
+            };
+            localStorage.setItem('appState', JSON.stringify(state));
+        }
+
+        function loadState() {
+            const state = JSON.parse(localStorage.getItem('appState'));
+            if (state) {
+                totalComissaoSombra = state.totalComissaoSombra;
+                totalComissaoSol = state.totalComissaoSol;
+                totalLogsSombra = state.totalLogsSombra;
+                totalLogsSol = state.totalLogsSol;
+                logsSombra = state.logsSombra;
+                logsSol = state.logsSol;
+                exchangeRate = state.exchangeRate;
+                goldRateR = state.goldRateR;
+                goldRateD = state.goldRateD;
+                totalLucro = state.totalLucro;
+                pacoteQuantidades = state.pacoteQuantidades;
+                document.getElementById('quantidadeOuro').value = state.quantidadeOuro;
+                document.getElementById('exchangeRate').value = exchangeRate;
+                document.getElementById('goldRateR').value = goldRateR;
+                document.getElementById('goldRateD').value = goldRateD;
+                updateDisplays();
+            }
+        }
+
+        function updateDisplays() {
+            document.getElementById('totalComissaoSombra').innerText = totalComissaoSombra.toFixed(2);
+            document.getElementById('totalLogsSombra').innerText = totalLogsSombra.toFixed(2);
+            document.getElementById('totalComissaoSol').innerText = totalComissaoSol.toFixed(2);
+            document.getElementById('totalLogsSol').innerText = totalLogsSol.toFixed(2);
+            document.getElementById('logsSombra').innerHTML = Object.keys(logsSombra).map(cliente => 
+                `<li class="log-item" id="log-sombra-${cliente}">
+                    ${logsSombra[cliente].verified ? '✔️ ' : ''}${cliente}: ${logsSombra[cliente].values.join(', ')} (Total: ${logsSombra[cliente].total.toFixed(2)})
+                    <button onclick="verifyLog('sombra', '${cliente}')">✔️</button>
+                    <button onclick="deleteLog('sombra', '${cliente}')">❌</button>
+                </li>`
+            ).join('');
+            document.getElementById('logsSol').innerHTML = Object.keys(logsSol).map(cliente => 
+                `<li class="log-item" id="log-sol-${cliente}">
+                    ${logsSol[cliente].verified ? '✔️ ' : ''}${cliente}: ${logsSol[cliente].values.join(', ')} (Total: ${logsSol[cliente].total.toFixed(2)})
+                    <button onclick="verifyLog('sol', '${cliente}')">✔️</button>
+                    <button onclick="deleteLog('sol', '${cliente}')">❌</button>
+                </li>`
+            ).join('');
+            document.getElementById('totalLogsSombraSol').innerText = (totalLogsSombra + totalLogsSol).toFixed(2);
+            document.getElementById('totalLucro').innerText = totalLucro.toFixed(2);
+            updatePacoteTotals();
+            updateOuroCalculations();
+        }
+
+        function addToSombraLog(comissao, valor) {
+            const nomeCliente = document.getElementById('nomeClienteSombra').value;
+            if (nomeCliente) {
+                if (!logsSombra[nomeCliente]) {
+                    logsSombra[nomeCliente] = { values: [], total: 0, verified: false, comissao: 0 };
+                }
+                logsSombra[nomeCliente].values.push(valor.toFixed(2));
+                logsSombra[nomeCliente].total += valor;
+                logsSombra[nomeCliente].comissao += comissao;
+                totalComissaoSombra += comissao;
+                totalLogsSombra += valor;
+                updateDisplays();
+                saveState();
+            } else {
+                alert("Por favor, insira o nome do cliente.");
+            }
+        }
+
+        function addToSolLog(comissao, valor) {
+            const nomeCliente = document.getElementById('nomeClienteSol').value;
+            if (nomeCliente) {
+                if (!logsSol[nomeCliente]) {
+                    logsSol[nomeCliente] = { values: [], total: 0, verified: false, comissao: 0 };
+                }
+                logsSol[nomeCliente].values.push(valor.toFixed(2));
+                logsSol[nomeCliente].total += valor;
+                logsSol[nomeCliente].comissao += comissao;
+                totalComissaoSol += comissao;
+                totalLogsSol += valor;
+                updateDisplays();
+                saveState();
+            } else {
+                alert("Por favor, insira o nome do cliente.");
+            }
+        }
+
+        function resetSombra() {
+            totalComissaoSombra = 0;
+            totalLogsSombra = 0;
+            logsSombra = {};
+            updateDisplays();
+            saveState();
+        }
+
+        function resetSol() {
+            totalComissaoSol = 0;
+            totalLogsSol = 0;
+            logsSol = {};
+            updateDisplays();
+            saveState();
+        }
+
+        function verifyLog(panel, cliente) {
+            if (panel === 'sombra') {
+                logsSombra[cliente].verified = true;
+            } else if (panel === 'sol') {
+                logsSol[cliente].verified = true;
+            }
+            updateDisplays();
+            saveState();
+        }
+
+        function deleteLog(panel, cliente) {
+            if (panel === 'sombra') {
+                totalLogsSombra -= logsSombra[cliente].total;
+                totalComissaoSombra -= logsSombra[cliente].comissao;
+                delete logsSombra[cliente];
+            } else if (panel === 'sol') {
+                totalLogsSol -= logsSol[cliente].total;
+                totalComissaoSol -= logsSol[cliente].comissao;
+                delete logsSol[cliente];
+            }
+            updateDisplays();
+            saveState();
+        }
+
+        function updatePacoteQuantidades(pacote, quantidade) {
+            pacoteQuantidades[pacote] = parseInt(quantidade) || 0;
+            updatePacoteTotals();
+            saveState();
+        }
+
+        function updatePacoteTotals() {
+            let totalR = 0;
+            let totalD = 0;
+            Object.keys(pacoteQuantidades).forEach(pacote => {
+                const subtotalR = pacoteQuantidades[pacote] * pacotePrecos[pacote] * exchangeRate;
+                const subtotalD = pacoteQuantidades[pacote] * pacotePrecos[pacote];
+                document.getElementById(`totalR${pacote}`).innerText = subtotalR.toFixed(2);
+                document.getElementById(`totalD${pacote}`).innerText = subtotalD.toFixed(2);
+                totalR += subtotalR;
+                totalD += subtotalD;
+            });
+            document.getElementById('totalRPacotes').innerText = totalR.toFixed(2);
+            document.getElementById('totalDPacotes').innerText = totalD.toFixed(2);
+            saveState();
+        }
+
+        function updateExchangeRate(rate) {
+            exchangeRate = parseFloat(rate) || 5.53;
+            updatePacoteTotals();
+        }
+
+        function updateGoldRateR(rate) {
+            goldRateR = parseFloat(rate) || 31.00;
+            updateOuroCalculations();
+        }
+
+        function updateGoldRateD(rate) {
+            goldRateD = parseFloat(rate) || 5.55;
+            updateOuroCalculations();
+        }
+
+        function calcularLucro() {
+            Object.keys(pacoteQuantidades).forEach(pacote => {
+                totalLucro += pacoteQuantidades[pacote] * pacoteLucro[pacote];
+            });
+            resetPacoteQuantidades();
+            updateDisplays();
+            saveState();
+        }
+		function resetPacoteQuantidades() {
+            Object.keys(pacoteQuantidades).forEach(pacote => {
+                pacoteQuantidades[pacote] = 0;
+                document.getElementById(`pacote${pacote}`).value = 0;
+            });
+            updatePacoteTotals();
+            saveState();
+        }
+		
+		function resetLucro() {
+            totalLucro = 0;
+            updateDisplays();
+            saveState();
+        }
+
+        function updateOuroCalculations() {
+            const quantidade = parseInt(document.getElementById('quantidadeOuro').value) || 0;
+            const totalR = (quantidade / 1000) * goldRateR;
+            const totalD = (quantidade / 1000) * goldRateD;
+            const quantidadeAnunciada = Math.floor(quantidade + (quantidade * 5.3 / 100));
+
+            let quantidadeDividida;
+
+            if (quantidade <= 2500) {
+                quantidadeDividida = quantidadeAnunciada;
+            } else if (quantidade <= 5000) {
+                quantidadeDividida = dividirEmPartes(quantidadeAnunciada, 2);
+            } else if (quantidade <= 7500) {
+                quantidadeDividida = dividirEmPartes(quantidadeAnunciada, 3);
+            } else if (quantidade <= 10000) {
+                quantidadeDividida = dividirEmPartes(quantidadeAnunciada, 4);
+            } else {
+                quantidadeDividida = "vou pegar uma lista pra você";
+            }
+
+            document.getElementById('totalROuro').innerText = totalR.toFixed(2);
+            document.getElementById('totalDOuro').innerText = totalD.toFixed(2);
+            document.getElementById('quantidadeAnunciada').innerText = quantidadeDividida;
+            saveState();
+        }
+
+        function dividirEmPartes(total, partes) {
+            const min = Math.floor(total / (partes + 1));
+            const max = Math.ceil(total / partes);
+            let resultado = [];
+            let soma = 0;
+
+            for (let i = 0; i < partes - 1; i++) {
+                const valor = Math.floor(Math.random() * (max - min + 1)) + min;
+                resultado.push(valor);
+                soma += valor;
+            }
+
+            resultado.push(total - soma);
+            return resultado.join(', ');
+        }
+
+        function copiarTexto(texto) {
+            navigator.clipboard.writeText(texto).then(() => {
+                alert('Texto copiado: ' + texto);
+            }, (err) => {
+                alert('Erro ao copiar texto: ', err);
+            });
+        }
+
+        function copiarPrecosAtualizados() {
+            const exchangeRate = parseFloat(document.getElementById('exchangeRate').value) || 5.53;
+
+            const precoR10 = (pacotePrecos[10] * exchangeRate).toFixed(2);
+            const precoR30 = (pacotePrecos[30] * exchangeRate).toFixed(2);
+            const precoR50 = (pacotePrecos[50] * exchangeRate).toFixed(2);
+            const precoR100 = (pacotePrecos[100] * exchangeRate).toFixed(2);
+
+            const texto = `𝗢𝘀 𝗽𝗿𝗲𝗰̧𝗼𝘀 𝗱𝗲 𝗽𝗮𝗰𝗼𝘁𝗲𝘀 𝗲 𝗽𝗮𝘀𝘀𝗲𝘀 𝘀𝗮̃𝗼:
+•⭐𝐏𝐚𝐜𝐨𝐭𝐞𝐬 𝐝𝐞 $𝟏𝟎 = $${pacotePrecos[10]} 𝐨𝐮 𝗥$${precoR10}.⭐
+•⭐𝐏𝐚𝐜𝐨𝐭𝐞𝐬 𝐝𝐞 $𝟑𝟎 = $${pacotePrecos[30]} 𝐨𝐮 𝗥$${precoR30}.⭐
+•⭐𝐏𝐚𝐜𝐨𝐭𝐞𝐬 𝐝𝐞 $𝟓𝟎 = $${pacotePrecos[50]} 𝐨𝐮 𝗥$${precoR50}.⭐
+•⭐𝐏𝐚𝐜𝐨𝐭𝐞𝐬 𝐝𝐞 $𝟏𝟎𝟎 = $${pacotePrecos[100]} 𝐨𝐮 𝗥$${precoR100}.⭐`;
+
+            copiarTexto(texto);
+        }
+
+        function copiarMensagemPersonalizada() {
+            const totalROuro = document.getElementById('totalROuro').innerText;
+            const quantidadeAnunciada = document.getElementById('quantidadeAnunciada').innerText;
+            const servidor = "Nome do Servidor";  // substitua pelo valor real ou uma entrada do usuário
+            const texto = `Da um total de R$${totalROuro}.
+Me fale o servidor e anuncie o item no mercado a ${quantidadeAnunciada}.`;
+
+            copiarTexto(texto);
+        }
+
+        window.onload = loadState;
+    </script>
+</head>
+<body>
+    <div class="panel">
+        <h2>Sombra</h2>
+        <label for="nomeClienteSombra">Nome do Cliente:</label>
+        <input type="text" id="nomeClienteSombra"><br>
+        <button onclick="addToSombraLog(0.12, 6.5)">Adicionar $0.12 / 6.5 / $10</button>
+        <button onclick="addToSombraLog(0.15, 19.5)">Adicionar $0.15 / 19.5 / $30 </button>
+        <button onclick="addToSombraLog(0.25, 32.5)">Adicionar $0.25 / 32.5 / $50 </button>
+        <button onclick="addToSombraLog(0.5, 65.0)">Adicionar $0.50 / 65.0 / $100 </button>
+        <button onclick="resetSombra()">Resetar</button>
+        <p>Total Comissão Sombra: $<span id="totalComissaoSombra">0.00</span></p>
+        <p>Valor a mandar no L Sombra: <span id="totalLogsSombra">0.00</span></p>
+        <ul id="logsSombra"></ul>
+    </div>
+    <div class="panel">
+        <h2>Sol</h2>
+        <label for="nomeClienteSol">Nome do Cliente:</label>
+        <input type="text" id="nomeClienteSol"><br>
+        <button class="sol-button" onclick="addToSolLog(0.12, 6.5)">Adicionar $0.12 / 6.5 / $10</button>
+        <button class="sol-button" onclick="addToSolLog(0.15, 19.5)">Adicionar $0.15 / 19.5 / $30</button>
+        <button class="sol-button" onclick="addToSolLog(0.25, 32.5)">Adicionar $0.25 / 32.5 / $50</button>
+        <button class="sol-button" onclick="addToSolLog(0.5, 65.0)">Adicionar $0.50 / 65.0 / $100</button>
+        <button class="sol-button" onclick="resetSol()">Resetar</button>
+        <p>Total Comissão Sol: $<span id="totalComissaoSol">0.00</span></p>
+        <p>Valor a mandar no L Sol: <span id="totalLogsSol">0.00</span></p>
+        <ul id="logsSol"></ul>
+    </div>
+    <div class="panel">
+        <h2>Pacotes</h2>
+        <label for="exchangeRate">Taxa de câmbio:</label>
+        <input type="number" id="exchangeRate" value="5.53" step="0.01" oninput="updateExchangeRate(this.value)"><br>
+        <h3>Pacote de $10</h3>
+        <label for="pacote10">Quantidade:</label>
+        <input type="number" id="pacote10" value="0" oninput="updatePacoteQuantidades(10, this.value)"><br>
+        <p>Preço com desconto: $7.30</p>
+        <p>Total: R$<span id="totalR10">0.00</span> / $<span id="totalD10">0.00</span></p>
+        <h3>Pacote de $30</h3>
+        <label for="pacote30">Quantidade:</label>
+        <input type="number" id="pacote30" value="0" oninput="updatePacoteQuantidades(30, this.value)"><br>
+        <p>Preço com desconto: $21.00</p>
+        <p>Total: R$<span id="totalR30">0.00</span> / $<span id="totalD30">0.00</span></p>
+        <h3>Pacote de $50</h3>
+        <label for="pacote50">Quantidade:</label>
+        <input type="number" id="pacote50" value="0" oninput="updatePacoteQuantidades(50, this.value)"><br>
+        <p>Preço com desconto: $35.00</p>
+        <p>Total: R$<span id="totalR50">0.00</span> / $<span id="totalD50">0.00</span></p>
+        <h3>Pacote de $100</h3>
+        <label for="pacote100">Quantidade:</label>
+        <input type="number" id="pacote100" value="0" oninput="updatePacoteQuantidades(100, this.value)"><br>
+        <p>Preço com desconto: $70.00</p>
+        <p>Total: R$<span id="totalR100">0.00</span> / $<span id="totalD100">0.00</span></p>
+        <h3>Total de Todos os Pacotes</h3>
+        <p>Total: R$<span id="totalRPacotes">0.00</span> / $<span id="totalDPacotes">0.00</span></p>
+        <button onclick="calcularLucro()">Lucro</button>
+        <button onclick="resetPacoteQuantidades()">Zerar Quantidade</button>
+        <button onclick="resetLucro()">Zerar Lucro</button>
+        <button onclick="copiarTexto('Da um total de R$' + document.getElementById('totalRPacotes').innerText + ' / $' + document.getElementById('totalDPacotes').innerText)">Copiar Total Pacotes</button>
+        <p>Lucro Total: $<span id="totalLucro">0.00</span></p>
+    </div>
+    <div class="panel">
+        <h2>Ouro</h2>
+        <label for="quantidadeOuro">Quantidade de Ouro:</label>
+        <input type="number" id="quantidadeOuro" value="0" oninput="updateOuroCalculations()"><br>
+        <label for="goldRateR">Valor a cada 1000 Gold em R$:</label>
+        <input type="number" id="goldRateR" value="31.00" step="0.01" oninput="updateGoldRateR(this.value)"><br>
+        <label for="goldRateD">Valor a cada 1000 Gold em $:</label>
+        <input type="number" id="goldRateD" value="5.55" step="0.01" oninput="updateGoldRateD(this.value)"><br>
+        <p>Total em R$: R$<span id="totalROuro">0.00</span></p>
+        <button onclick="copiarTexto('Da um total de R$' + document.getElementById('totalROuro').innerText)">Copiar Total em R$</button>
+        <p>Total em $: $<span id="totalDOuro">0.00</span></p>
+        <button onclick="copiarTexto('Da um total de $' + document.getElementById('totalDOuro').innerText)">Copiar Total em $</button>
+        <p>Quantidade de Ouro Anunciada: <span id="quantidadeAnunciada">0</span></p>
+    </div>
+    <div class="panel">
+        <h2>Informações de Pagamento</h2>
+        <p>Pix: CELULAR 14988231270 Nome: Victoria Stefany</p>
+        <button onclick="copiarTexto('Pix: CELULAR 14988231270 Nome: Victoria Stefany')">Copiar Pix</button>
+        <p>Mercado Pago: <a href="https://link.mercadopago.com.br/ervindanada" target="_blank">link</a></p>
+        <button onclick="copiarTexto('https://link.mercadopago.com.br/ervindanada')">Copiar Link Mercado Pago</button>
+        <p>Binance: estrela203@hotmail.com</p>
+        <button onclick="copiarTexto('Binance: estrela203@hotmail.com')">Copiar Binance</button>
+    </div>
+    <div class="panel">
+        <h2>Preços de Pacotes e Passes</h2>
+        <button onclick="copiarPrecosAtualizados()">Copiar Preços Atualizados</button>
+    </div>
+    <div class="panel">
+        <h2>Mensagem Personalizada</h2>
+        <button onclick="copiarMensagemPersonalizada()">Copiar Mensagem Personalizada</button>
+    </div>
+    <div style="width: 90%; padding: 20px; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin: 20px; background-color: rgba(255, 255, 255, 0.9);">
+        <h2>Total de Todos os Logs</h2>
+        <p>Valor a mandar no L Total: <span id="totalLogsSombraSol">0.00</span></p>
+    </div>
+</body>
+</html>
