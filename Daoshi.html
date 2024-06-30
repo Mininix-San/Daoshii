@@ -11,14 +11,14 @@
             background-repeat: no-repeat;
             background-attachment: fixed;
             font-family: 'Comic Sans MS', 'Comic Sans', cursive;
-            color: #333;
+            color: #FF69B4;
         }
         .panel {
             width: 22%;
             padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 2px solid #FFD700;
+            border-radius: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
             margin: 20px;
             display: inline-block;
             vertical-align: top;
@@ -26,26 +26,29 @@
             position: relative;
         }
         h2 {
-            font-size: 1.5em;
+            font-size: 1.8em;
             margin-bottom: 10px;
             text-align: center;
+            color: #FF1493;
         }
         .sol-button {
-            background-color: pink;
-            border: none;
-            border-radius: 5px;
-            font-size: 1em;
-            color: white;
+            background-color: #FFD700;
+            border: 2px solid #FF69B4;
+            border-radius: 10px;
+            font-size: 1.2em;
+            color: #FF1493;
+            font-weight: bold;
         }
         button {
             display: block;
             margin: 10px 0;
             padding: 10px;
-            border: none;
-            border-radius: 5px;
-            font-size: 1em;
-            background-color: lightblue;
+            border: 2px solid #FF69B4;
+            border-radius: 10px;
+            font-size: 1.2em;
+            background-color: #FF69B4;
             color: white;
+            font-weight: bold;
         }
         .log-item {
             display: flex;
@@ -54,23 +57,28 @@
         }
         .log-item button {
             margin-left: 10px;
-            background-color: lightcoral;
+            background-color: #FF69B4;
+            border: 2px solid #FFD700;
         }
         .log-item::before {
-            content: "🌸";
+            content: "✨";
             margin-right: 5px;
         }
         input[type="text"], input[type="number"] {
             width: calc(100% - 22px);
             padding: 10px;
             margin: 5px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            border: 2px solid #FF69B4;
+            border-radius: 10px;
+            background-color: #FFD700;
+            color: #FF1493;
+            font-weight: bold;
         }
         label {
             font-weight: bold;
             margin-top: 10px;
             display: block;
+            color: #FF1493;
         }
         p, ul {
             margin: 10px 0;
@@ -81,6 +89,7 @@
         }
     </style>
     <script>
+        // Código JavaScript permanece inalterado
         let totalComissaoSombra = 0;
         let totalComissaoSol = 0;
         let totalLogsSombra = 0;
@@ -482,7 +491,7 @@ Me fale o servidor e anuncie o item no mercado a ${quantidadeAnunciada}.`;
         <h2>Mensagem Personalizada</h2>
         <button onclick="copiarMensagemPersonalizada()">Copiar Mensagem Personalizada</button>
     </div>
-    <div style="width: 90%; padding: 20px; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin: 20px; background-color: rgba(255, 255, 255, 0.9);">
+    <div style="width: 90%; padding: 20px; border: 2px solid #FFD700; border-radius: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); margin: 20px; background-color: rgba(255, 255, 255, 0.9);">
         <h2>Total de Todos os Logs</h2>
         <p>Valor a mandar no L Total: <span id="totalLogsSombraSol">0.00</span></p>
     </div>
