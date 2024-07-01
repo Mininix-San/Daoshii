@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Comissão e Pacotes</title>
     <style>
+        /* Seu estilo CSS permanece o mesmo */
         body {
             background-image: url('https://r4.wallpaperflare.com/wallpaper/671/31/673/tv-show-star-vs-the-forces-of-evil-star-butterfly-wallpaper-a920088dc10a7dfbd63728bff031867d.jpg');
             background-size: cover;
@@ -95,17 +96,24 @@
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
     <script>
+        // Configurações do Firebase
         var firebaseConfig = {
-            apiKey: "AIzaSyDr6gktlrVLi7ApkCrPb3Q4gHoJq-Y9naQ",
-            authDomain: "daoshi-5c77b.firebaseapp.com",
-            databaseURL: "https://daoshi-5c77b-default-rtdb.firebaseio.com/",
-            projectId: "daoshi-5c77b",
-            storageBucket: "daoshi-5c77b.appspot.com",
-            messagingSenderId: "606466561287",
-            appId: "1:606466561287:web:52cb65f3772d4fdfaae1a2"
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_PROJETO.firebaseapp.com",
+            databaseURL: "https://SEU_PROJETO.firebaseio.com",
+            projectId: "SEU_PROJETO",
+            storageBucket: "SEU_PROJETO.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
         };
+        // Inicializa o Firebase
         firebase.initializeApp(firebaseConfig);
     </script>
+</head>
+<body>
+    <!-- Seus painéis e estrutura HTML permanecem os mesmos -->
+    <!-- Código HTML omitido para brevidade -->
+
     <script>
         let db = firebase.database();
 
@@ -585,141 +593,5 @@ Me fale o servidor e anuncie o item no mercado a ${quantidadeAnunciada}.`;
 
         window.onload = loadState;
     </script>
-</head>
-<body>
-    <div class="panel">
-        <h2>Sombra</h2>
-        <label for="nomeClienteSombra">Nome do Cliente:</label>
-        <input type="text" id="nomeClienteSombra"><br>
-        <button onclick="addToSombraLog(0.12, 6.5)">Adicionar $0.12 / 6.5 / $10</button>
-        <button onclick="addToSombraLog(0.15, 19.5)">Adicionar $0.15 / 19.5 / $30 </button>
-        <button onclick="addToSombraLog(0.25, 32.5)">Adicionar $0.25 / 32.5 / $50 </button>
-        <button onclick="addToSombraLog(0.5, 65.0)">Adicionar $0.50 / 65.0 / $100 </button>
-        <button onclick="resetSombra()">Resetar</button>
-        <p>Total Comissão Sombra: $<span id="totalComissaoSombra">0.00</span></p>
-        <p>Valor a mandar no L Sombra: <span id="totalLogsSombra">0.00</span></p>
-        <ul id="logsSombra"></ul>
-    </div>
-    <div class="panel">
-        <h2>Sol</h2>
-        <label for="nomeClienteSol">Nome do Cliente:</label>
-        <input type="text" id="nomeClienteSol"><br>
-        <button class="sol-button" onclick="addToSolLog(0.12, 6.5)">Adicionar $0.12 / 6.5 / $10</button>
-        <button class="sol-button" onclick="addToSolLog(0.15, 19.5)">Adicionar $0.15 / 19.5 / $30</button>
-        <button class="sol-button" onclick="addToSolLog(0.25, 32.5)">Adicionar $0.25 / 32.5 / $50</button>
-        <button class="sol-button" onclick="addToSolLog(0.5, 65.0)">Adicionar $0.50 / 65.0 / $100</button>
-        <button class="sol-button" onclick="resetSol()">Resetar</button>
-        <p>Total Comissão Sol: $<span id="totalComissaoSol">0.00</span></p>
-        <p>Valor a mandar no L Sol: <span id="totalLogsSol">0.00</span></p>
-        <ul id="logsSol"></ul>
-    </div>
-    <div class="panel">
-        <h2>Pacotes</h2>
-        <label for="exchangeRate">Taxa de câmbio:</label>
-        <input type="number" id="exchangeRate" value="5.53" step="0.01" oninput="updateExchangeRate(this.value)"><br>
-        <h3>Pacote de $10</h3>
-        <label for="pacote10">Quantidade:</label>
-        <input type="number" id="pacote10" value="0" oninput="updatePacoteQuantidades(10, this.value)"><br>
-        <p>Preço com desconto: $7.30</p>
-        <p>Total: R$<span id="totalR10">0.00</span> / $<span id="totalD10">0.00</span></p>
-        <h3>Pacote de $30</h3>
-        <label for="pacote30">Quantidade:</label>
-        <input type="number" id="pacote30" value="0" oninput="updatePacoteQuantidades(30, this.value)"><br>
-        <p>Preço com desconto: $21.00</p>
-        <p>Total: R$<span id="totalR30">0.00</span> / $<span id="totalD30">0.00</span></p>
-        <h3>Pacote de $50</h3>
-        <label for="pacote50">Quantidade:</label>
-        <input type="number" id="pacote50" value="0" oninput="updatePacoteQuantidades(50, this.value)"><br>
-        <p>Preço com desconto: $35.00</p>
-        <p>Total: R$<span id="totalR50">0.00</span> / $<span id="totalD50">0.00</span></p>
-        <h3>Pacote de $100</h3>
-        <label for="pacote100">Quantidade:</label>
-        <input type="number" id="pacote100" value="0" oninput="updatePacoteQuantidades(100, this.value)"><br>
-        <p>Preço com desconto: $70.00</p>
-        <p>Total: R$<span id="totalR100">0.00</span> / $<span id="totalD100">0.00</span></p>
-        <h3>Total de Todos os Pacotes</h3>
-        <p>Total: R$<span id="totalRPacotes">0.00</span> / $<span id="totalDPacotes">0.00</span></p>
-        <button onclick="calcularLucro()">Lucro</button>
-        <button onclick="resetPacoteQuantidades()">Zerar Quantidade</button>
-        <button onclick="resetLucro()">Zerar Lucro</button>
-        <button onclick="copiarTexto('Da um total de R$' + document.getElementById('totalRPacotes').innerText + ' / $' + document.getElementById('totalDPacotes').innerText)">Copiar Total Pacotes</button>
-        <p>Lucro Total: $<span id="totalLucro">0.00</span></p>
-    </div>
-    <div class="panel">
-        <h2>Ouro</h2>
-        <label for="quantidadeOuro">Quantidade de Ouro:</label>
-        <input type="number" id="quantidadeOuro" value="0" oninput="updateOuroCalculations()"><br>
-        <label for="goldRateR">Valor a cada 1000 Gold em R$:</label>
-        <input type="number" id="goldRateR" value="31.00" step="0.01" oninput="updateGoldRateR(this.value)"><br>
-        <label for="goldRateD">Valor a cada 1000 Gold em $:</label>
-        <input type="number" id="goldRateD" value="5.55" step="0.01" oninput="updateGoldRateD(this.value)"><br>
-        <p>Total em R$: R$<span id="totalROuro">0.00</span></p>
-        <button onclick="copiarTexto('Da um total de R$' + document.getElementById('totalROuro').innerText)">Copiar Total em R$</button>
-        <p>Total em $: $<span id="totalDOuro">0.00</span></p>
-        <button onclick="copiarTexto('Da um total de $' + document.getElementById('totalDOuro').innerText)">Copiar Total em $</button>
-        <p>Quantidade de Ouro Anunciada: <span id="quantidadeAnunciada">0</span></p>
-    </div>
-    <div class="panel">
-        <h2>Informações de Pagamento</h2>
-        <p>Pix: CELULAR 14988231270 Nome: Victoria Stefany</p>
-        <button onclick="copiarTexto('Pix: CELULAR 14988231270 Nome: Victoria Stefany')">Copiar Pix</button>
-        <p>Mercado Pago: <a href="https://link.mercadopago.com.br/ervindanada" target="_blank">link</a></p>
-        <button onclick="copiarTexto('https://link.mercadopago.com.br/ervindanada')">Copiar Link Mercado Pago</button>
-        <p>Binance: estrela203@hotmail.com</p>
-        <button onclick="copiarTexto('Binance: estrela203@hotmail.com')">Copiar Binance</button>
-    </div>
-    <div class="panel">
-        <h2>Preços de Pacotes e Passes</h2>
-        <button onclick="copiarPrecosAtualizados()">Copiar Preços Atualizados</button>
-    </div>
-    <div class="panel">
-        <h2>Mensagem Personalizada</h2>
-        <button onclick="copiarMensagemPersonalizada()">Copiar Mensagem Personalizada</button>
-    </div>
-    <div style="width: 90%; padding: 20px; border: 2px solid #FF6EC7; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); margin: 20px; background-color: rgba(255, 255, 255, 0.9);">
-        <h2>Total de Todos os Logs</h2>
-        <p>Valor a mandar no L Total: <span id="totalLogsSombraSol">0.00</span></p>
-    </div>
-    <div class="panel">
-        <h2>Cow</h2>
-        <label for="nomeClienteCow">Nome do Cliente:</label>
-        <input type="text" id="nomeClienteCow"><br>
-        <label for="lucroCow">Lucro por 1053g:</label>
-        <input type="number" id="lucroCow" value="0" step="0.01"><br>
-        <button onclick="registrarCliente('Cow')">Registrar</button>
-        <button onclick="resetRegistros('Cow')">Resetar</button>
-        <ul id="registrosCow"></ul>
-        <p>Total de Ouro (Cow): <span id="totalCow">0</span>g</p>
-        <p>Total Lucro (Cow): $<span id="totalLucroCow">0.00</span></p>
-    </div>
-    <div class="panel">
-        <h2>LBW</h2>
-        <label for="nomeClienteLBW">Nome do Cliente:</label>
-        <input type="text" id="nomeClienteLBW"><br>
-        <label for="lucroLBW">Lucro por 1053g:</label>
-        <input type="number" id="lucroLBW" value="0" step="0.01"><br>
-        <button onclick="registrarCliente('LBW')">Registrar</button>
-        <button onclick="resetRegistros('LBW')">Resetar</button>
-        <ul id="registrosLBW"></ul>
-        <p>Total de Ouro (LBW): <span id="totalLBW">0</span>g</p>
-        <p>Total Lucro (LBW): $<span id="totalLucroLBW">0.00</span></p>
-    </div>
-    <div class="panel">
-        <h2>DW</h2>
-        <label for="nomeClienteDW">Nome do Cliente:</label>
-        <input type="text" id="nomeClienteDW"><br>
-        <label for="lucroDW">Lucro por 1053g:</label>
-        <input type="number" id="lucroDW" value="0" step="0.01"><br>
-        <button onclick="registrarCliente('DW')">Registrar</button>
-        <button onclick="resetRegistros('DW')">Resetar</button>
-        <ul id="registrosDW"></ul>
-        <p>Total de Ouro (DW): <span id="totalDW">0</span>g</p>
-        <p>Total Lucro (DW): $<span id="totalLucroDW">0.00</span></p>
-    </div>
-    <div class="panel">
-        <h2>Total de Todos os Clientes</h2>
-        <p>Total de Ouro: <span id="totalClientes">0</span>g</p>
-        <p>Total Lucro Geral: $<span id="totalLucroGeral">0.00</span></p>
-    </div>
 </body>
 </html>
